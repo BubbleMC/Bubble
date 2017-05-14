@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+<form>
+    <select>
+        {% for item in items %}
+            <option>{{ item.item_name }}</option>
+        {% endfor %}
+    </select>
+</form>
+</body>
+</html>
