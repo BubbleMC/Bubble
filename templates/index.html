@@ -1,16 +1,61 @@
+{% load staticfiles %}
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Test</title>
+    <title>{{ siteName }}</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-<form>
-    <select>
-        {% for item in items %}
-            <option>{{ item.item_name }}</option>
-        {% endfor %}
-    </select>
-</form>
+<div class="site-wrapper">
+
+      <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+          <div class="masthead clearfix">
+            <div class="inner">
+              <h3 class="masthead-brand">{{ siteName }}</h3>
+              <nav>
+                <ul class="nav masthead-nav">
+                    {% for menu in menus %}
+                        <li><a href="{{ menu.menu_link }}">{{ menu.menu_name }}</a></li>
+                    {% endfor %}
+                </ul>
+              </nav>
+            </div>
+          </div>
+
+          <div class="inner cover">
+            <h1 class="cover-heading">{{ serverIP }}</h1>
+            <p class="lead">{{ description }}</p>
+
+              <form class="form-inline">
+                  <input type="text" class="form-control" name="account" placeholder="Nickname..." required>
+                  <select class="form-control" name="sum" required>
+                      {% for item in items %}
+                      <option value="{{ item.item_price }}">{{ item.item_name }} ({{ item.item_price }} rub.)</option>
+                      {% endfor %}
+                  </select>
+                  <button type="submit" class="btn  btn-default">Buy</button>
+              </form>
+          </div>
+
+          <div class="mastfoot">
+            <div class="inner">
+              <p>Donation system powered by <a href="https://github.com/MarshalX/Bubble">Bubble</a>. Cover template by <a href="https://twitter.com/mdo">@mdo</a></p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+<script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+
 </body>
 </html>
