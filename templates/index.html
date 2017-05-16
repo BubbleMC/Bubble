@@ -1,5 +1,4 @@
 {% load staticfiles %}
-<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -32,6 +31,7 @@
             <p class="lead">{{ description }}</p>
 
               <form class="form-inline">
+                  {% csrf_token %}
                   <input type="text" class="form-control" name="account" placeholder="Nickname..." required>
                   <select class="form-control" name="sum" required>
                       {% for item in items %}
