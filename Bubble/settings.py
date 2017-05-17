@@ -1,7 +1,7 @@
 import os
 
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 
 SECRET_KEY = 'zph8*z8s%8jva0k*6y7i*2i&2@kv$3%0^m9ahntdxr@+_je$om'
 
@@ -70,8 +70,9 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR + '/templates',
-            BASE_DIR + '/basic/templates'
+            BASE_DIR + 'templates',
+            BASE_DIR + 'basic/templates',
+            BASE_DIR + PAYMENT['aggregator'] + '/templates'
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -120,5 +121,5 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    BASE_DIR + '/static/',
+    BASE_DIR + 'static/',
 ]
