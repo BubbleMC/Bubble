@@ -1,6 +1,9 @@
+# Bubble Copyright © 2017 Il'ya Semyonov
+# License: https://www.gnu.org/licenses/gpl-3.0.en.html
 from django.shortcuts import render
-from .models import Item, Menu, Payment
 from django.conf import settings
+import models
+
 
 context = {
     'siteName': settings.BUBBLE['siteName'],
@@ -13,8 +16,8 @@ context = {
 
 
 def index(request):
-    context.update({'menus': Menu.objects.all(),
-                    'items': Item.objects.all(),
+    context.update({'menus': models.Menu.objects.all(),
+                    'items': models.Item.objects.all(),
                     'status': -1})
 
     return render(request, 'index.html', context)

@@ -1,5 +1,7 @@
+# Bubble Copyright © 2017 Il'ya Semyonov
+# License: https://www.gnu.org/licenses/gpl-3.0.en.html
 from django.contrib import admin
-from .models import Item, Menu, Payment, Task
+import models
 
 
 class ItemAdmin(admin.ModelAdmin):
@@ -28,7 +30,7 @@ class TaskAdmin(admin.ModelAdmin):
     readonly_fields = ['task_cmd', 'task_payment']
 
 
-admin.site.register(Item, ItemAdmin)
-admin.site.register(Menu, MenuAdmin)
-admin.site.register(Payment, PaymentAdmin)
-admin.site.register(Task, TaskAdmin)
+admin.site.register(models.Item, ItemAdmin)
+admin.site.register(models.Menu, MenuAdmin)
+admin.site.register(models.Payment, PaymentAdmin)
+admin.site.register(models.Task, TaskAdmin)
