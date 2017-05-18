@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Bubble Copyright © 2017 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 import os
@@ -41,7 +43,6 @@ ALLOWED_HOSTS = [
     '[::1]'
 ]
 
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'basic',
+    'unitpay'
 ]
 
 
