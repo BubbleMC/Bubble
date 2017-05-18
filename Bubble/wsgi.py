@@ -3,8 +3,8 @@
 # Bubble Copyright © 2017 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 import os
-
 from django.core.wsgi import get_wsgi_application
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Bubble.settings")
 
