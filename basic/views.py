@@ -45,14 +45,14 @@ def initialization(request):
                                                                                      account, desc))
         elif aggr == 'interkassa':
             signString = sum + ':' + id + ':' + desc + ':0:' + itemId + ':' + key
-            sign = base64.b64encode(md5(signString.encode("utf-8")).digest())
+            sign = base64.b64encode(md5(signString.encode('utf-8')).digest())
 
             return redirect('https://sci.interkassa.com/?ik_co_id=%s&ik_am=%s&ik_desc=%s&ik_x_item=%s&ik_pm_no=0&ik_sign=%s' % (id, sum,
                                                                                                                                 desc, itemId,
                                                                                                                                 sign))
         elif aggr == 'free-kassa':
             signString = id + ':' + sum + ':' + key + ':' + account
-            sign = md5(signString).hexdigest()
+            sign = md5(signString.encode('utf-8')).hexdigest()
 
             return redirect('http://www.free-kassa.ru/merchant/cash.php?m=%s&oa=%s&s=%s&o=%s&us_item=%s' % (id, sum,
                                                                                                             sign, account,
