@@ -23,16 +23,18 @@ DATABASES = {
 
 
 PAYMENT = {
-    'aggregator': 'unitpay',
-    'publicKey': '1234-4321',
-    'secretKey': '5g45234f23452g345f242'
+    'aggregator': 'free-kassa',
+    'publicKey': '50552',
+    'secretKey': 't03dnpt2',
+    'secretKey2': 'd2uykhf7'    # only for free-kassa
 }
 
 
 BUBBLE = {
     'siteName': 'Bubble',
     'serverIP': 'BUBBLE.LOCALHOST',
-    'description': 'Donation system written with Django'
+    'description': 'Donation system written with Django',
+    'descriptionOfPurchase': 'Покупка %s для %s на %s'  # account, item, siteName
 }
 
 DEBUG = True

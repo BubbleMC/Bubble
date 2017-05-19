@@ -11,6 +11,6 @@ aggregator = settings.PAYMENT['aggregator'] + '.urls'
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^payment/', include(aggregator)),
+    url(r'^payment/', include('unitpay.urls')),
     url(r'^', include('basic.urls')),
 ]

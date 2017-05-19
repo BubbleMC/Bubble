@@ -6,6 +6,6 @@ from django.conf.urls import url
 import views
 
 
-urlpatterns = {
+urlpatterns = [
     url(r'^$', views.payment),
-}
+]
