@@ -4,10 +4,11 @@
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 from __future__ import unicode_literals
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
+from django.http import Http404
+from django.shortcuts import render, redirect
 from django.conf import settings
 from hashlib import md5
+import base64
 import models
 
 
@@ -28,31 +29,36 @@ def initialization(request):
         try:
             item = models.Item.objects.get(id=form.get('item'))
         except ObjectDoesNotExist:
-            return Http404
+            raise Http404
 
         id = settings.PAYMENT['publicKey']
         key = settings.PAYMENT['secretKey']
         sum = str(item.item_price)
         account = form.get('account')
+        itemId = form.get('item')
+        desc = settings.BUBBLE['descriptionOfPurchase'] % (item.item_name, account, context['siteName'])
 
         aggr = context['aggregator']
 
         if aggr == 'unitpay':
-            desc = settings.PAYMENT['descriptionOfPurchase'] % (item.item_name, account, context['siteName'])
-
-            return HttpResponseRedirect('https://unitpay.ru/pay/%s?sum=%s&account=%s&desc=%s' % (id, sum,
-                                                                                                 account, desc))
+            return redirect('https://unitpay.ru/pay/%s?sum=%s&account=%s&desc=%s' % (id, sum,
+                                                                                     account, desc))
         elif aggr == 'interkassa':
-            return HttpResponseRedirect('/')
+            signString = sum + ':' + id + ':' + desc + ':0:' + itemId + ':' + key
+            sign = base64.b64encode(md5(signString.encode("utf-8")).digest())
 
+            return redirect('https://sci.interkassa.com/?ik_co_id=%s&ik_am=%s&ik_desc=%s&ik_x_item=%s&ik_pm_no=0&ik_sign=%s' % (id, sum,
+                                                                                                                                desc, itemId,
+                                                                                                                                sign))
         elif aggr == 'free-kassa':
-            sign_string = id + ':' + sum + ':' + key + ':' + account
-            sign = md5(sign_string).hexdigest()
+            signString = id + ':' + sum + ':' + key + ':' + account
+            sign = md5(signString).hexdigest()
 
-            return HttpResponseRedirect('http://www.free-kassa.ru/merchant/cash.php?m=%s&oa=%s&s=%s&o=%s' % (id, sum,
-                                                                                                             sign, account))
+            return redirect('http://www.free-kassa.ru/merchant/cash.php?m=%s&oa=%s&s=%s&o=%s&us_item=%s' % (id, sum,
+                                                                                                            sign, account,
+                                                                                                            itemId))
     else:
-        return HttpResponseRedirect('/')
+        return redirect('/')
 
 
 def success(request):
