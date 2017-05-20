@@ -7,10 +7,10 @@ from django.contrib import admin
 from django.conf import settings
 
 
-aggregator = settings.PAYMENT['aggregator'] + '.urls'
+aggregator = settings.PAYMENT['aggregator'] + '.payment'
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^payment/', include('unitpay.urls')),
+    url(r'^payment/', include(aggregator)),
     url(r'^', include('basic.urls')),
 ]

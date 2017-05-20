@@ -3,9 +3,14 @@
 # Bubble Copyright © 2017 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 from django.conf.urls import url
-import views
+from django.shortcuts import render
+
+
+def payment(request):
+    return render(request, 'index.html')
 
 
 urlpatterns = [
-    url(r'^$', views.payment),
+    url(r'^$', payment),
 ]
+
