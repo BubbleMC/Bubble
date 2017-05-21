@@ -76,8 +76,6 @@ def payment(request):
                 p.save()
             except Error:
                 return JsonResponse({'error': {'message': 'Unable to create payment database'}})
-
-            JsonResponse({'result': {'message': 'CHECK is successful'}})
         else:
             return JsonResponse({'result': {'message': 'Payment already exists'}})
 
@@ -87,7 +85,7 @@ def payment(request):
         try:
             p = basic.models.Payment.obcjects.get(payment_number=data.get('params[unitpayId]'))
         except ObjectDoesNotExist:
-            return JsonResponse({'result': {'message': 'Payment not found'}})
+            return JsonResponse({'error': {'message': 'Payment not found'}})
 
         if p.payment_status == 1:
             return JsonResponse({'result': {'message': 'Payment has already been paid'}})
@@ -97,7 +95,7 @@ def payment(request):
             p.payment_dateComplete = datetime.now()
             p.save()
         except Error:
-            return JsonResponse({'result': {'message': 'Unable to confirm payment database'}})
+            return JsonResponse({'error': {'message': 'Unable to confirm payment database'}})
 
         try:
             item = basic.models.Item.objects.get(id=itemId)
@@ -105,9 +103,9 @@ def payment(request):
             task = basic.models.Task(task_cmd=cmd, task_payment=p)
             task.save()
         except ObjectDoesNotExist:
-            return JsonResponse({'result': {'message': 'Invalid purchase subject'}})
+            return JsonResponse({'error': {'message': 'Invalid purchase subject'}})
         except Error:
-            return JsonResponse({'result': {'message': 'Unable to create task database'}})
+            return JsonResponse({'error': {'message': 'Unable to create task database'}})
 
         return JsonResponse({'result': {'message': 'PAY is successful'}})
 
