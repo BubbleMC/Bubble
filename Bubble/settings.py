@@ -26,7 +26,7 @@ DATABASES = {
 PAYMENT = {
     'aggregator': 'unitpay',
     'publicKey': '50552',
-    'secretKey': 't03dnpt2',
+    'secretKey': 'c014c5c31093e5c7588153d1fff5dd25',
     'secretKey2': 'd2uykhf7',    # only for free-kassa
     'currency': 'RUB'
 }

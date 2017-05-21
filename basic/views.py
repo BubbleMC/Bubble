@@ -45,7 +45,7 @@ def initialization(request):
         aggr = context['aggregator']
 
         if aggr == 'unitpay':
-            url = 'https://unitpay.ru/pay/{}?sum={}&account={}-_-{}%&desc={}'
+            url = 'https://unitpay.ru/pay/{}?sum={}&account={}[{}]%&desc={}'
             return redirect(url.format(id, price, account, itemId, desc))
         elif aggr == 'interkassa':
             signString = price + ':' + id + ':' + desc + ':0:' + itemId + ':' + key

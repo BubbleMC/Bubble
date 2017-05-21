@@ -12,7 +12,7 @@ from datetime import datetime
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import Error
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.conf import settings
 
 import basic.models
@@ -34,8 +34,8 @@ def payment(request):
 
     data = request.GET.copy()
     method = data.get('method')
-    itemId = re.findall(r'(?<=-_-)(.*)', data.get('params[account]'))
-    account = re.findall(r'(.*)(?=-_-)', data.get('params[account]'))
+    itemId = re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0]
+    account = re.findall(r'(.*)(?=\[)', data.get('params[account]'))[0]
     key = settings.PAYMENT['secretKey']
     currency = settings.PAYMENT['currency']
 
@@ -50,7 +50,7 @@ def payment(request):
     signString += key
     sign = hashlib.sha256(signString.encode('utf-8')).hexdigest()
 
-    if data.get('params[sign]') != sign:
+    if data.get('params[signature]') != sign:
         return JsonResponse({'error': {'message': 'Incorrect digital signature'}})
 
     if method == 'check':
@@ -64,7 +64,7 @@ def payment(request):
 
             price = item.item_price
 
-            if price != data.get('params[orderSum]'):
+            if price != int(data.get('params[orderSum]')):
                 return JsonResponse({'error': {'message': 'Invalid payment amount'}})
             if currency != data.get('params[orderCurrency]'):
                 return JsonResponse({'error': {'message': 'Invalid payment currency'}})
@@ -83,7 +83,7 @@ def payment(request):
 
     if method == 'pay':
         try:
-            p = basic.models.Payment.obcjects.get(payment_number=data.get('params[unitpayId]'))
+            p = basic.models.Payment.objects.get(payment_number=data.get('params[unitpayId]'))
         except ObjectDoesNotExist:
             return JsonResponse({'error': {'message': 'Payment not found'}})
 
@@ -99,7 +99,7 @@ def payment(request):
 
         try:
             item = basic.models.Item.objects.get(id=itemId)
-            cmd = item.item_cmd.format(account)
+            cmd = item.item_cmd.format(account=account)
             task = basic.models.Task(task_cmd=cmd, task_payment=p)
             task.save()
         except ObjectDoesNotExist:
