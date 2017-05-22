@@ -17,7 +17,7 @@ import models
 context = {
     'siteName': settings.BUBBLE['siteName'],
     'description': settings.BUBBLE['description'],
-    'serverIP': settings.BUBBLE['serverIP'],
+    'serverIp': settings.BUBBLE['serverIp'],
 
     'aggregator': settings.PAYMENT['aggregator'],
     'publicKey': settings.PAYMENT['publicKey'],

@@ -34,9 +34,11 @@ PAYMENT = {
 
 BUBBLE = {
     'siteName': 'Bubble',
-    'serverIP': 'BUBBLE.LOCALHOST',
+    'serverIp': 'BUBBLE.LOCALHOST',
     'description': 'Donation system written with Django',
-    'descriptionOfPurchase': 'Покупка {item} для {account} на {siteName}'  # {account}, {item}, {siteName}
+    'descriptionOfPurchase': 'Покупка {item} для {account} на {siteName}',  # {account}, {item}, {siteName}
+    'messageOfSuccess': '{account}, поздравляем с покупкой! Вы успешно купили {item}.',
+    'messageOfFail': 'Что-то пошло не так. Попробуйте ещё раз!'
 }
 
 DEBUG = True
@@ -120,7 +122,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 STATIC_URL = '/static/'

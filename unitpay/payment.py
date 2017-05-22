@@ -12,32 +12,52 @@ from datetime import datetime
 from django.conf.urls import url
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import Error
-from django.http import Http404, JsonResponse, HttpResponse
+from django.http import Http404, JsonResponse
 from django.conf import settings
 
 import basic.models
 
 
-allowIP = {
+allowIp = {
     '31.186.100.49',
     '178.132.203.105',
     '52.29.152.23',
     '52.19.56.234',
-    '127.0.0.1'
+    '127.0.0.1'    #debug
+}
+
+
+getParameters = {
+    'method',
+    'params[account]',
+    'params[signature]',
+    'params[unitpayId]',
+    'params[orderSum]',
+    'params[orderCurrency]'
 }
 
 
 def payment(request):
     ip = request.META.get('REMOTE_ADDR')
-    if ip not in allowIP:
+    if ip not in allowIp:
         raise Http404()
+
+    for getParameter in getParameters:
+        if getParameter not in request.GET:
+            return JsonResponse({'error': {'message': 'Invalid request'}})
 
     data = request.GET.copy()
     method = data.get('method')
-    itemId = re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0]
     account = re.findall(r'(.*)(?=\[)', data.get('params[account]'))[0]
     key = settings.PAYMENT['secretKey']
     currency = settings.PAYMENT['currency']
+
+    try:
+        orderSum = int(data.get('params[orderSum]'))
+        itemId = int(re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0])
+        unitpayId = int(data.get('params[unitpayId]'))
+    except ValueError:
+        return JsonResponse({'error': {'message': 'Invalid parameters'}})
 
     queryString = request.META.get('QUERY_STRING')
     params = urlparse.parse_qsl(queryString)
@@ -55,7 +75,7 @@ def payment(request):
 
     if method == 'check':
         try:
-            p = basic.models.Payment.objects.get(payment_number=data.get('params[unitpayId]'))
+            p = basic.models.Payment.objects.get(payment_number=unitpayId)
         except ObjectDoesNotExist:
             try:
                 item = basic.models.Item.objects.get(id=itemId)
@@ -64,13 +84,13 @@ def payment(request):
 
             price = item.item_price
 
-            if price != int(data.get('params[orderSum]')):
+            if price != orderSum:
                 return JsonResponse({'error': {'message': 'Invalid payment amount'}})
             if currency != data.get('params[orderCurrency]'):
                 return JsonResponse({'error': {'message': 'Invalid payment currency'}})
 
             try:
-                p = basic.models.Payment(payment_number=data.get('params[unitpayId]'),
+                p = basic.models.Payment(payment_number=unitpayId,
                                          payment_account=account,
                                          payment_item=item)
                 p.save()
@@ -83,7 +103,7 @@ def payment(request):
 
     if method == 'pay':
         try:
-            p = basic.models.Payment.objects.get(payment_number=data.get('params[unitpayId]'))
+            p = basic.models.Payment.objects.get(payment_number=unitpayId)
         except ObjectDoesNotExist:
             return JsonResponse({'error': {'message': 'Payment not found'}})
 
@@ -108,6 +128,8 @@ def payment(request):
             return JsonResponse({'error': {'message': 'Unable to create task database'}})
 
         return JsonResponse({'result': {'message': 'PAY is successful'}})
+
+    return JsonResponse({'error': {'message': 'Method not supported'}})
 
 
 urlpatterns = [
