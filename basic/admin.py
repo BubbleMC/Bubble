@@ -30,6 +30,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
 class TaskAdmin(admin.ModelAdmin):
     readonly_fields = ['task_cmd', 'task_payment']
+    list_display = ['task_cmd', 'task_payment']
 
 
 admin.site.register(models.Item, ItemAdmin)
