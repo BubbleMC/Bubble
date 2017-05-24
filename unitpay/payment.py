@@ -55,7 +55,7 @@ def payment(request):
     try:
         orderSum = int(data.get('params[orderSum]'))
         itemId = int(re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0])
-        unitpayId = int(data.get('params[unitpayId]'))
+        paymentId = int(data.get('params[unitpayId]'))
     except ValueError:
         return JsonResponse({'error': {'message': 'Invalid parameters'}})
 
@@ -75,7 +75,7 @@ def payment(request):
 
     if method == 'check':
         try:
-            p = basic.models.Payment.objects.get(payment_number=unitpayId)
+            p = basic.models.Payment.objects.get(payment_number=paymentId)
         except ObjectDoesNotExist:
             try:
                 item = basic.models.Item.objects.get(id=itemId)
@@ -90,7 +90,7 @@ def payment(request):
                 return JsonResponse({'error': {'message': 'Invalid payment currency'}})
 
             try:
-                p = basic.models.Payment(payment_number=unitpayId,
+                p = basic.models.Payment(payment_number=paymentId,
                                          payment_account=account,
                                          payment_item=item)
                 p.save()
@@ -103,7 +103,7 @@ def payment(request):
 
     if method == 'pay':
         try:
-            p = basic.models.Payment.objects.get(payment_number=unitpayId)
+            p = basic.models.Payment.objects.get(payment_number=paymentId)
         except ObjectDoesNotExist:
             return JsonResponse({'error': {'message': 'Payment not found'}})
 

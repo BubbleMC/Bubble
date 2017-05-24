@@ -24,9 +24,9 @@ DATABASES = {
 
 
 PAYMENT = {
-    'aggregator': 'unitpay',
-    'publicKey': '50552',
-    'secretKey': 'c014c5c31093e5c7588153d1fff5dd25',
+    'aggregator': 'interkassa',
+    'publicKey': '5919e67a3b1eaf8c718b4567',
+    'secretKey': 'r0IZyvWRIFpZHaMV',
     'secretKey2': 'd2uykhf7',    # only for free-kassa
     'currency': 'RUB'
 }

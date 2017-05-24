@@ -5,5 +5,5 @@
 from django.apps import AppConfig
 
 
-class UnitpayConfig(AppConfig):
+class InterkassaConfig(AppConfig):
     name = 'interkassa'

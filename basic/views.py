@@ -48,11 +48,11 @@ def initialization(request):
             url = 'https://unitpay.ru/pay/{}?sum={}&account={}[{}]%&desc={}'
             return redirect(url.format(id, price, account, itemId, desc))
         elif aggr == 'interkassa':
-            signString = price + ':' + id + ':' + desc + ':0:' + itemId + ':' + key
+            signString = price + ':' + id + ':' + desc + ':0:' + account + ':' + itemId + ':' + key
             sign = base64.b64encode(md5(signString.encode('utf-8')).digest())
 
-            url = 'https://sci.interkassa.com/?ik_co_id={}&ik_am={}&ik_desc={}&ik_x_item={}&ik_pm_no=0&ik_sign={}'
-            return redirect(url.format(id, price, desc, itemId, sign))
+            url = 'https://sci.interkassa.com/?ik_co_id={}&ik_am={}&ik_desc={}&ik_x_item={}&ik_x_account={}&ik_pm_no=0&ik_sign={}'
+            return redirect(url.format(id, price, desc, itemId, account, sign))
         elif aggr == 'free-kassa':
             signString = id + ':' + price + ':' + key + ':' + account
             sign = md5(signString.encode('utf-8')).hexdigest()
