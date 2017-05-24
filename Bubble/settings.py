@@ -41,7 +41,7 @@ BUBBLE = {
     'messageOfFail': 'Что-то пошло не так. Попробуйте ещё раз!'
 }
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
