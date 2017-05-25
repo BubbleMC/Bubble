@@ -26,7 +26,8 @@ allowIp = {
     '151.80.190.101',
     '151.80.190.102',
     '151.80.190.103',
-    '151.80.190.104'
+    '151.80.190.104',
+    '127.0.0.1'
 }
 
 if settings.DEBUG:
@@ -36,7 +37,7 @@ getParameters = {
     'ik_co_id',
     'ik_am',
     'ik_cur',
-    'ik_x_account'
+    'ik_x_account',
     'ik_x_item',
     'ik_inv_id',
     'ik_inv_st',
@@ -66,7 +67,7 @@ def payment(request):
     except ValueError:
         return HttpResponse('Invalid parameters', status=ACCEPTED)
 
-    queryString = request.META.get('QUERY_STRING')
+    queryString = request.META.get('QUERY_STRING').decode('utf-8')
     params = urlparse.parse_qsl(queryString)
     params.sort()
 

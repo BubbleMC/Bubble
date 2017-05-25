@@ -26,7 +26,7 @@ DATABASES = {
 PAYMENT = {
     'aggregator': 'interkassa',
     'publicKey': '5919e67a3b1eaf8c718b4567',
-    'secretKey': 'r0IZyvWRIFpZHaMV',
+    'secretKey': 'yENf6A2eWiVzLyny',
     'secretKey2': 'd2uykhf7',    # only for free-kassa
     'currency': 'RUB'
 }
@@ -41,7 +41,7 @@ BUBBLE = {
     'messageOfFail': 'Что-то пошло не так. Попробуйте ещё раз!'
 }
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',

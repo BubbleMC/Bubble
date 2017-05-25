@@ -22,11 +22,10 @@ allowIp = {
     '31.186.100.49',
     '178.132.203.105',
     '52.29.152.23',
-    '52.19.56.234'
+    '52.19.56.234',
+    '127.0.0.1'
 }
 
-if settings.DEBUG:
-    allowIp.update('127.0.0.1')
 
 getParameters = {
     'method',
@@ -60,7 +59,7 @@ def payment(request):
     except ValueError:
         return JsonResponse({'error': {'message': 'Invalid parameters'}})
 
-    queryString = request.META.get('QUERY_STRING')
+    queryString = request.META.get('QUERY_STRING').decode('utf-8')
     params = urlparse.parse_qsl(queryString)
     params.sort()
 
