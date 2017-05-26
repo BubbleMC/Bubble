@@ -30,8 +30,6 @@ allowIp = {
     '127.0.0.1'
 }
 
-if settings.DEBUG:
-    allowIp.update('127.0.0.1')
 
 getParameters = {
     'ik_co_id',
@@ -67,14 +65,14 @@ def payment(request):
     except ValueError:
         return HttpResponse('Invalid parameters', status=ACCEPTED)
 
-    queryString = request.META.get('QUERY_STRING').decode('utf-8')
-    params = urlparse.parse_qsl(queryString)
+    queryString = request.META.get('QUERY_STRING')
+    params = urlparse.parse_qsl(queryString, keep_blank_values=True)
     params.sort()
 
     signString = ''
     for param in params:
         if param[0] != 'ik_sign':
-            signString += param[1] + ':'
+            signString += param[1].decode('utf-8') + ':'
     signString += key
     sign = base64.b64encode(hashlib.md5(signString.encode('utf-8')).digest())
 
@@ -84,7 +82,7 @@ def payment(request):
     if data.get('ik_inv_st') != 'success':
         return HttpResponse('Invalid payment status', status=ACCEPTED)
 
-    if data.get('ik_co_id') != settings.PAYMENT['publicId']:
+    if data.get('ik_co_id') != settings.PAYMENT['publicKey']:
         return HttpResponse('Invalid checkout id', status=ACCEPTED)
 
     try:
@@ -98,24 +96,29 @@ def payment(request):
         return HttpResponse('Invalid payment amount', status=ACCEPTED)
 
     try:
-        p = basic.models.Payment(payment_number=paymentId,
-                                 payment_account=account,
-                                 payment_item=item,
-                                 payment_status=1,
-                                 payment_dateCreate=data.get('ik_inv_crt'),
-                                 payment_dateComplete=data.get('ik_inv_prc'))
-        p.save()
-    except Error:
-        return HttpResponse('Unable to create payment database', status=ACCEPTED)
+        basic.models.Payment.objects.get(payment_number=paymentId)
+    except ObjectDoesNotExist:
+        try:
+            p = basic.models.Payment(payment_number=paymentId,
+                                     payment_account=account,
+                                     payment_item=item,
+                                     payment_status=1,
+                                     payment_dateCreate=data.get('ik_inv_crt'),
+                                     payment_dateComplete=data.get('ik_inv_prc'))
+            p.save()
+        except Error:
+            return HttpResponse('Unable to create payment database', status=ACCEPTED)
 
-    try:
-        cmd = item.item_cmd.format(account=account)
-        task = basic.models.Task(task_cmd=cmd, task_payment=p)
-        task.save()
-    except Error:
-        return HttpResponse('Unable to create task database', status=ACCEPTED)
+        try:
+            cmd = item.item_cmd.format(account=account)
+            task = basic.models.Task(task_cmd=cmd, task_payment=p)
+            task.save()
+        except Error:
+            return HttpResponse('Unable to create task database', status=ACCEPTED)
 
-    return HttpResponse()
+        return HttpResponse()
+    else:
+        return HttpResponse('Payment has already been paid', status=ACCEPTED)
 
 
 urlpatterns = [

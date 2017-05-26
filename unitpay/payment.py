@@ -59,14 +59,14 @@ def payment(request):
     except ValueError:
         return JsonResponse({'error': {'message': 'Invalid parameters'}})
 
-    queryString = request.META.get('QUERY_STRING').decode('utf-8')
-    params = urlparse.parse_qsl(queryString)
+    queryString = request.META.get('QUERY_STRING')
+    params = urlparse.parse_qsl(queryString, keep_blank_values=True)
     params.sort()
 
     signString = ''
     for param in params:
         if (param[0] != 'params[sign]') and (param[0] != 'params[signature]'):
-            signString += param[1] + '{up}'
+            signString += param[1].decode('utf-8') + '{up}'
     signString += key
     sign = hashlib.sha256(signString.encode('utf-8')).hexdigest()
 
