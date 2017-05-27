@@ -63,19 +63,28 @@ def initialization(request):
         return redirect('/')
 
 
+def index(request):
+    context.update({'menus': models.Menu.objects.all(), 'items': models.Item.objects.all(), 'status': 3})
+
+    return render(request, 'index.html', context)
+
+
+def pending(request):
+    message = settings.BUBBLE['messageOfPending']
+    context.update({'status': 2, 'message': message})
+
+    return render(request, 'index.html', context)
+
+
 def success(request):
-    context.update({'status': 1})
+    message = settings.BUBBLE['messageOfSuccess']
+    context.update({'status': 1, 'message': message})
 
     return render(request, 'index.html', context)
 
 
 def fail(request):
-    context.update({'status': 0})
-
-    return render(request, 'index.html', context)
-
-
-def index(request):
-    context.update({'menus': models.Menu.objects.all(), 'items': models.Item.objects.all(), 'status': -1})
+    message = settings.BUBBLE['messageOfFail']
+    context.update({'status': -1, 'message': message})
 
     return render(request, 'index.html', context)

@@ -40,7 +40,7 @@ class Payment(models.Model):
     payment_account = models.CharField(max_length=256, verbose_name='Покупатель')
     payment_item = models.ForeignKey(Item, verbose_name='Купленный товар')
     payment_status = models.BooleanField(default=False, verbose_name='Статус платежа')
-    payment_dateCreate = models.DateTimeField(default=datetime.now(), verbose_name='Дата создания')
+    payment_dateCreate = models.DateTimeField(default=datetime.now, verbose_name='Дата создания')
     payment_dateComplete = models.DateTimeField(blank=True, null=True, verbose_name='Дата оплаты')
 
 

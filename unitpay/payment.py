@@ -48,16 +48,18 @@ def payment(request):
 
     data = request.GET.copy()
     method = data.get('method')
-    account = re.findall(r'(.*)(?=\[)', data.get('params[account]'))[0]
     key = settings.PAYMENT['secretKey']
     currency = settings.PAYMENT['currency']
 
     try:
         orderSum = int(data.get('params[orderSum]'))
+        account = re.findall(r'(.*)(?=\[)', data.get('params[account]'))[0]
         itemId = int(re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0])
         paymentId = int(data.get('params[unitpayId]'))
     except ValueError:
         return JsonResponse({'error': {'message': 'Invalid parameters'}})
+    except IndexError:
+        return JsonResponse({'error': {'message': 'Invalid account'}})
 
     queryString = request.META.get('QUERY_STRING')
     params = urlparse.parse_qsl(queryString, keep_blank_values=True)

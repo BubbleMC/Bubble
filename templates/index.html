@@ -29,9 +29,11 @@
           <div class="inner cover">
             <h1 class="cover-heading">{{ serverIp }}</h1>
             <p class="lead">{{ description }}</p>
-              {% if status == -1 %}
+              {% if status == 3 %}
                 {% include 'form.html' %}
-              {% elif status %}
+              {% elif status == 2%}
+                {% include 'pending.html' %}
+              {% elif status == 1%}
                 {% include 'success.html' %}
               {% else %}
                 {% include 'fail.html' %}

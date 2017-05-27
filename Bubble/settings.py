@@ -37,7 +37,8 @@ BUBBLE = {
     'serverIp': 'BUBBLE.LOCALHOST',
     'description': 'Donation system written with Django',
     'descriptionOfPurchase': 'Покупка {item} для {account} на {siteName}',  # {account}, {item}, {siteName}
-    'messageOfSuccess': '{account}, поздравляем с покупкой! Вы успешно купили {item}.',
+    'messageOfPending': 'Ожидается выполнение платежа!',
+    'messageOfSuccess': 'Поздравляем с покупкой!',
     'messageOfFail': 'Что-то пошло не так. Попробуйте ещё раз!'
 }
 

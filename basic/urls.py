@@ -8,6 +8,7 @@ import views
 
 urlpatterns = [
     url(r'^redirect/$', views.initialization),
+    url(r'^pending/$', views.pending),
     url(r'^success/$', views.success),
     url(r'^fail/$', views.fail),
     url(r'^$', views.index)
