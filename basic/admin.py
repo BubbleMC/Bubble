@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Bubble Copyright © 2017 Il'ya Semyonov
+# Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 from django.contrib import admin
-import models
+
+from . import models
 
 
 class ItemAdmin(admin.ModelAdmin):
@@ -25,10 +26,16 @@ class PaymentAdmin(admin.ModelAdmin):
             readonly_fields.remove('is_submitted')
         return readonly_fields
 
-    list_display = ['payment_account', 'payment_status', 'payment_dateCreate', 'payment_dateComplete']
+    def has_add_permission(self, request):
+        return False
+
+    list_display = ['payment_number', 'payment_account', 'payment_status', 'payment_dateCreate', 'payment_dateComplete']
 
 
 class TaskAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
     readonly_fields = ['task_cmd', 'task_payment']
     list_display = ['task_cmd', 'task_payment']
 

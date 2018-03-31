@@ -1,29 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Bubble Copyright © 2017 Il'ya Semyonov
+# Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
-from __future__ import unicode_literals
-
 import hashlib
-import urlparse
 import re
-from datetime import datetime
+from urllib.parse import parse_qsl
 
-from django.conf.urls import url
-from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from django.urls import re_path
 from django.db import Error
 from django.http import Http404, JsonResponse
 from django.conf import settings
 
-import basic.models
+from basic import models
 
 
-allowIp = {
+allowIps = {
     '31.186.100.49',
     '178.132.203.105',
     '52.29.152.23',
-    '52.19.56.234',
-    '127.0.0.1'
+    '52.19.56.234'
 }
 
 
@@ -39,7 +35,7 @@ getParameters = {
 
 def payment(request):
     ip = request.META.get('REMOTE_ADDR')
-    if ip not in allowIp:
+    if ip not in allowIps:
         raise Http404()
 
     for getParameter in getParameters:
@@ -52,50 +48,52 @@ def payment(request):
     currency = settings.PAYMENT['currency']
 
     try:
-        orderSum = int(data.get('params[orderSum]'))
+        order_sum = int(data.get('params[orderSum]'))
         account = re.findall(r'(.*)(?=\[)', data.get('params[account]'))[0]
-        itemId = int(re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0])
-        paymentId = int(data.get('params[unitpayId]'))
+        item_id = int(re.findall(r'(?<=\[)(.*)(?=\])', data.get('params[account]'))[0])
+        payment_id = int(data.get('params[unitpayId]'))
     except ValueError:
         return JsonResponse({'error': {'message': 'Invalid parameters'}})
     except IndexError:
         return JsonResponse({'error': {'message': 'Invalid account'}})
 
-    queryString = request.META.get('QUERY_STRING')
-    params = urlparse.parse_qsl(queryString, keep_blank_values=True)
+    query_string = request.META.get('QUERY_STRING')
+    params = parse_qsl(query_string, keep_blank_values=True)
     params.sort()
 
-    signString = ''
+    sign_string = ''
     for param in params:
         if (param[0] != 'params[sign]') and (param[0] != 'params[signature]'):
-            signString += param[1].decode('utf-8') + '{up}'
-    signString += key
-    sign = hashlib.sha256(signString.encode('utf-8')).hexdigest()
+            sign_string += param[1] + '{up}'
+    sign_string += key
+    sign = hashlib.sha256(sign_string.encode('utf-8')).hexdigest()
 
     if data.get('params[signature]') != sign:
         return JsonResponse({'error': {'message': 'Incorrect digital signature'}})
 
     if method == 'check':
         try:
-            p = basic.models.Payment.objects.get(payment_number=paymentId)
-        except ObjectDoesNotExist:
+            payment = models.Payment.objects.get(payment_number=payment_id)
+        except models.Payment.DoesNotExist:
             try:
-                item = basic.models.Item.objects.get(id=itemId)
-            except ObjectDoesNotExist:
+                item = models.Item.objects.get(id=item_id)
+            except models.Payment.DoesNotExist:
                 return JsonResponse({'error': {'message': 'Invalid purchase subject'}})
 
             price = item.item_price
 
-            if price != orderSum:
+            if price != order_sum:
                 return JsonResponse({'error': {'message': 'Invalid payment amount'}})
             if currency != data.get('params[orderCurrency]'):
                 return JsonResponse({'error': {'message': 'Invalid payment currency'}})
 
             try:
-                p = basic.models.Payment(payment_number=paymentId,
-                                         payment_account=account,
-                                         payment_item=item)
-                p.save()
+                payment = models.Payment(
+                    payment_number=payment_id,
+                    payment_account=account,
+                    payment_item=item
+                )
+                payment.save()
             except Error:
                 return JsonResponse({'error': {'message': 'Unable to create payment database'}})
         else:
@@ -105,26 +103,30 @@ def payment(request):
 
     if method == 'pay':
         try:
-            p = basic.models.Payment.objects.get(payment_number=paymentId)
-        except ObjectDoesNotExist:
+            payment = models.Payment.objects.get(payment_number=payment_id)
+        except models.Payment.DoesNotExist:
             return JsonResponse({'error': {'message': 'Payment not found'}})
 
-        if p.payment_status == 1:
+        if payment.payment_status == 1:
             return JsonResponse({'result': {'message': 'Payment has already been paid'}})
 
         try:
-            p.payment_status = 1
-            p.payment_dateComplete = datetime.now()
-            p.save()
+            payment.payment_status = 1
+            payment.payment_dateComplete = timezone.now()
+            payment.save()
         except Error:
             return JsonResponse({'error': {'message': 'Unable to confirm payment database'}})
 
         try:
-            item = basic.models.Item.objects.get(id=itemId)
+            item = models.Item.objects.get(id=item_id)
             cmd = item.item_cmd.format(account=account)
-            task = basic.models.Task(task_cmd=cmd, task_payment=p)
+
+            task = models.Task(
+                task_cmd=cmd,
+                task_payment=payment
+            )
             task.save()
-        except ObjectDoesNotExist:
+        except models.Item.DoesNotExist:
             return JsonResponse({'error': {'message': 'Invalid purchase subject'}})
         except Error:
             return JsonResponse({'error': {'message': 'Unable to create task database'}})
@@ -135,5 +137,5 @@ def payment(request):
 
 
 urlpatterns = [
-    url(r'^$', payment),
+    re_path(r'^$', payment),
 ]

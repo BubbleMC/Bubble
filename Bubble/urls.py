@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Bubble Copyright © 2017 Il'ya Semyonov
+# Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
-from django.conf.urls import url, include
+from django.urls import include, path, re_path
 from django.contrib import admin
 from django.conf import settings
 
@@ -10,7 +10,7 @@ from django.conf import settings
 aggregator = settings.PAYMENT['aggregator'] + '.payment'
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^payment/', include(aggregator)),
-    url(r'^', include('basic.urls')),
+    path('admin/', admin.site.urls),
+    re_path(r'payment/', include(aggregator), name='payment'),
+    path('', include('basic.urls')),
 ]

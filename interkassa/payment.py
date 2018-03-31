@@ -1,24 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Bubble Copyright © 2017 Il'ya Semyonov
+# Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
-from __future__ import unicode_literals
-
 import hashlib
 import base64
-import urlparse
-from httplib import ACCEPTED
+from urllib.parse import parse_qsl
 
-from django.conf.urls import url
+from django.urls import re_path
 from django.http import Http404, HttpResponse
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import Error
 from django.conf import settings
 
-import basic.models
+from basic import models
 
 
-allowIp = {
+allowIps = {
     '151.80.190.97',
     '151.80.190.98',
     '151.80.190.99',
@@ -26,8 +22,7 @@ allowIp = {
     '151.80.190.101',
     '151.80.190.102',
     '151.80.190.103',
-    '151.80.190.104',
-    '127.0.0.1'
+    '151.80.190.104'
 }
 
 
@@ -44,10 +39,12 @@ getParameters = {
     'ik_sign'
 }
 
+ACCEPTED = 202
+
 
 def payment(request):
     ip = request.META.get('REMOTE_ADDR')
-    if ip not in allowIp:
+    if ip not in allowIps:
         raise Http404()
 
     for getParameter in getParameters:
@@ -59,22 +56,22 @@ def payment(request):
     key = settings.PAYMENT['secretKey']
 
     try:
-        orderSum = int(data.get('ik_am'))
-        itemId = int(data.get('ik_x_item'))
-        paymentId = int(data.get('ik_inv_id'))
+        order_sum = int(data.get('ik_am'))
+        item_id = int(data.get('ik_x_item'))
+        payment_id = int(data.get('ik_inv_id'))
     except ValueError:
         return HttpResponse('Invalid parameters', status=ACCEPTED)
 
-    queryString = request.META.get('QUERY_STRING')
-    params = urlparse.parse_qsl(queryString, keep_blank_values=True)
+    query_string = request.META.get('QUERY_STRING')
+    params = parse_qsl(query_string, keep_blank_values=True)
     params.sort()
 
-    signString = ''
+    sign_string = ''
     for param in params:
         if param[0] != 'ik_sign':
-            signString += param[1].decode('utf-8') + ':'
-    signString += key
-    sign = base64.b64encode(hashlib.md5(signString.encode('utf-8')).digest())
+            sign_string += param[1].decode('utf-8') + ':'
+    sign_string += key
+    sign = base64.b64encode(hashlib.md5(sign_string.encode('utf-8')).digest())
 
     if data.get('ik_sign') != sign:
         return HttpResponse('Incorrect digital signature', status=ACCEPTED)
@@ -86,32 +83,38 @@ def payment(request):
         return HttpResponse('Invalid checkout id', status=ACCEPTED)
 
     try:
-        item = basic.models.Item.objects.get(id=itemId)
-    except ObjectDoesNotExist:
+        item = models.Item.objects.get(id=item_id)
+    except models.Item.DoesNotExist:
         return HttpResponse('Invalid purchase subject', status=ACCEPTED)
 
     price = item.item_price
 
-    if orderSum != price:
+    if order_sum != price:
         return HttpResponse('Invalid payment amount', status=ACCEPTED)
 
     try:
-        basic.models.Payment.objects.get(payment_number=paymentId)
-    except ObjectDoesNotExist:
+        payment = models.Payment.objects.get(payment_number=payment_id)
+    except models.Payment.DoesNotExist:
         try:
-            p = basic.models.Payment(payment_number=paymentId,
-                                     payment_account=account,
-                                     payment_item=item,
-                                     payment_status=1,
-                                     payment_dateCreate=data.get('ik_inv_crt'),
-                                     payment_dateComplete=data.get('ik_inv_prc'))
-            p.save()
+            payment = models.Payment(
+                payment_number=payment_id,
+                payment_account=account,
+                payment_item=item,
+                payment_status=1,
+                payment_dateCreate=data.get('ik_inv_crt'),
+                payment_dateComplete=data.get('ik_inv_prc')
+            )
+            payment.save()
         except Error:
             return HttpResponse('Unable to create payment database', status=ACCEPTED)
 
         try:
             cmd = item.item_cmd.format(account=account)
-            task = basic.models.Task(task_cmd=cmd, task_payment=p)
+
+            task = models.Task(
+                task_cmd=cmd,
+                task_payment=payment
+            )
             task.save()
         except Error:
             return HttpResponse('Unable to create task database', status=ACCEPTED)
@@ -122,5 +125,5 @@ def payment(request):
 
 
 urlpatterns = [
-    url(r'^$', payment),
+    re_path(r'^$', payment),
 ]

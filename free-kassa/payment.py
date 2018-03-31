@@ -1,30 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Bubble Copyright © 2017 Il'ya Semyonov
+# Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
-from __future__ import unicode_literals
-
 import hashlib
-from datetime import datetime
 
-from django.conf.urls import url
+from django.utils import timezone
+from django.urls import re_path
 from django.shortcuts import HttpResponse
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import Error
 from django.http import Http404
 from django.conf import settings
 
-import basic.models
+from basic import models
 
 
-allowIp = {
+allowIps = {
     '136.243.38.147',
     '136.243.38.149',
     '136.243.38.150',
     '136.243.38.151',
     '136.243.38.189',
-    '88.198.88.98',
-    '127.0.0.1'
+    '88.198.88.98'
 }
 
 
@@ -41,7 +37,7 @@ getParameters = {
 
 def payment(request):
     ip = request.META.get('REMOTE_ADDR')
-    if ip not in allowIp:
+    if ip not in allowIps:
         raise Http404()
 
     for getParameter in getParameters:
@@ -53,14 +49,14 @@ def payment(request):
     account = data.get('MERCHANT_ORDER_ID')
 
     try:
-        itemId = int(data.get('us_item'))
-        orderSum = int(data.get('AMOUNT'))
-        paymentId = int(data.get('intid'))
+        item_id = int(data.get('us_item'))
+        order_sum = int(data.get('AMOUNT'))
+        payment_id = int(data.get('intid'))
     except ValueError:
         return HttpResponse('Invalid parameters')
 
-    signString = data.get('MERCHANT_ID') + ':' + data.get('AMOUNT') + ':' + key + ':' + account
-    sign = hashlib.md5(signString).hexdigest()
+    sign_string = data.get('MERCHANT_ID') + ':' + data.get('AMOUNT') + ':' + key + ':' + account
+    sign = hashlib.md5(sign_string).hexdigest()
 
     if data.get('SIGN') != sign:
         return HttpResponse('Incorrect digital signature')
@@ -69,31 +65,37 @@ def payment(request):
         return HttpResponse('Invalid checkout id')
 
     try:
-        item = basic.models.Item.objects.get(id=itemId)
-    except ObjectDoesNotExist:
+        item = models.Item.objects.get(id=item_id)
+    except models.Item.DoesNotExist:
         return HttpResponse('Invalid purchase subject')
 
     price = item.item_price
 
-    if orderSum != price:
+    if order_sum != price:
         return HttpResponse('Invalid payment amount')
 
     try:
-        basic.models.Payment.objects.get(payment_number=paymentId)
-    except ObjectDoesNotExist:
+        payment = models.Payment.objects.get(payment_number=payment_id)
+    except models.Payment.DoesNotExist:
         try:
-            p = basic.models.Payment(payment_number=paymentId,
-                                     payment_account=account,
-                                     payment_item=item,
-                                     payment_status=1,
-                                     payment_dateComplete=datetime.now())
-            p.save()
+            payment = models.Payment(
+                payment_number=payment_id,
+                payment_account=account,
+                payment_item=item,
+                payment_status=1,
+                payment_dateComplete=timezone.now()
+            )
+            payment.save()
         except Error:
             return HttpResponse('Unable to create payment database')
 
         try:
             cmd = item.item_cmd.format(account=account)
-            task = basic.models.Task(task_cmd=cmd, task_payment=p)
+
+            task = models.Task(
+                task_cmd=cmd,
+                task_payment=payment
+            )
             task.save()
         except Error:
             return HttpResponse('Unable to create task database')
@@ -104,6 +106,5 @@ def payment(request):
 
 
 urlpatterns = [
-    url(r'^$', payment),
+    re_path(r'^$', payment),
 ]
-
