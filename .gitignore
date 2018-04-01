@@ -1,3 +1,4 @@
 *.pyc
 .idea
 basic/migrations/
+Bubble/settings.py

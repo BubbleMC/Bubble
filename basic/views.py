@@ -80,7 +80,7 @@ def index(request):
 
 
 def pending(request):
-    message = settings.BUBBLE['messageOfPending']
+    message = settings.BUBBLE['message_of_pending']
     args.update(
         {
             'message': message
@@ -91,7 +91,7 @@ def pending(request):
 
 
 def success(request):
-    message = settings.BUBBLE['messageOfSuccess']
+    message = settings.BUBBLE['message_of_success']
     args.update(
         {
             'message': message
@@ -102,7 +102,7 @@ def success(request):
 
 
 def fail(request):
-    message = settings.BUBBLE['messageOfFail']
+    message = settings.BUBBLE['message_of_fail']
     args.update(
         {
             'message': message
