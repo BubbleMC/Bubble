@@ -4,6 +4,7 @@
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 import base64
 from hashlib import md5
+from urllib.parse import urlencode
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
@@ -11,16 +12,11 @@ from django.conf import settings
 from . import models
 
 
-args = {
-    'site_title': settings.BUBBLE['site_title'],
-    'project_name': settings.BUBBLE['project_name'],
-    'keywords': settings.BUBBLE['keywords'],
-    'description': settings.BUBBLE['description'],
-    'server_ip': settings.BUBBLE['server_ip'],
-
-    'aggregator': settings.PAYMENT['aggregator'],
-    'public_key': settings.PAYMENT['public_key'],
-}
+args = settings.BUBBLE
+args.update({
+    'menus': models.Menu.objects.all(),
+    'items': models.Item.objects.all()
+})
 
 
 def initialization(request):
@@ -37,25 +33,38 @@ def initialization(request):
         item_id = form.get('item')
         account = form.get('account')
         price = str(item.item_price)
-        desc = settings.BUBBLE['description_of_purchase'].format(
+        desc = args['description_of_purchase'].format(
             item=item.item_name,
             account=account,
             project_name=args['project_name']
         )
 
-        aggregator = args['aggregator']
+        aggregator = settings.PAYMENT['aggregator']
 
         if aggregator == 'unitpay':
             url = 'https://unitpay.ru/pay/{}?sum={}&account={}[{}]%&desc={}'
             return redirect(url.format(cash, price, account, item_id, desc))
 
         elif aggregator == 'interkassa':
-            sign_string = price + ':' + cash + ':' + desc + ':0:' + account + ':' + item_id + ':' + secret_key
-            sign = base64.b64encode(md5(sign_string.encode('utf-8')).digest())
+            params = {
+                'ik_am': price,
+                'ik_co_id': cash,
+                'ik_desc': desc,
+                'ik_pm_no': 0,
+                'ik_x_account': account,
+                'ik_x_item': item_id,
+            }
 
-            url = 'https://sci.interkassa.com/?ik_co_id={}&ik_am={}' \
-                  '&ik_desc={}&ik_x_item={}&ik_x_account={}&ik_pm_no=0&ik_sign={}'
-            return redirect(url.format(cash, price, desc, item_id, account, sign))
+            sign_string = ':'.join(['{}'.format(value) for (key, value) in params.items()])
+            sign_string += ':' + secret_key
+
+            sign = base64.b64encode(md5(sign_string.encode('utf-8')).digest())
+            params.update({'ik_sign': sign})
+
+            params_string = urlencode(params)
+
+            url = 'https://sci.interkassa.com/?{}'
+            return redirect(url.format(params_string))
 
         elif aggregator == 'free-kassa':
             sign_string = cash + ':' + price + ':' + secret_key + ':' + account
@@ -69,44 +78,16 @@ def initialization(request):
 
 
 def index(request):
-    args.update(
-        {
-            'menus': models.Menu.objects.all(),
-            'items': models.Item.objects.all()
-        }
-    )
-
     return render(request, 'form.html', args)
 
 
 def pending(request):
-    message = settings.BUBBLE['message_of_pending']
-    args.update(
-        {
-            'message': message
-        }
-    )
-
     return render(request, 'pending.html', args)
 
 
 def success(request):
-    message = settings.BUBBLE['message_of_success']
-    args.update(
-        {
-            'message': message
-        }
-    )
-
     return render(request, 'success.html', args)
 
 
 def fail(request):
-    message = settings.BUBBLE['message_of_fail']
-    args.update(
-        {
-            'message': message
-        }
-    )
-
     return render(request, 'fail.html', args)

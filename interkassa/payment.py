@@ -4,6 +4,7 @@
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
 import hashlib
 import base64
+
 from urllib.parse import parse_qsl
 
 from django.urls import re_path
@@ -39,28 +40,29 @@ getParameters = {
     'ik_sign'
 }
 
-ACCEPTED = 202
-
 
 def payment(request):
-    ip = request.META.get('REMOTE_ADDR')
+    ip = request.META.get('HTTP_CF_CONNECTING_IP')
+    if ip is None:
+        ip = request.META.get('REMOTE_ADDR')
+
     if ip not in allowIps:
         raise Http404()
 
     for getParameter in getParameters:
         if getParameter not in request.GET:
-            return HttpResponse('Invalid request', status=ACCEPTED)
+            return HttpResponse('Invalid request')
 
     data = request.GET.copy()
     account = data.get('ik_x_account')
-    key = settings.PAYMENT['secretKey']
+    key = settings.PAYMENT['secret_key']
 
     try:
         order_sum = int(data.get('ik_am'))
         item_id = int(data.get('ik_x_item'))
         payment_id = int(data.get('ik_inv_id'))
     except ValueError:
-        return HttpResponse('Invalid parameters', status=ACCEPTED)
+        return HttpResponse('Invalid parameters')
 
     query_string = request.META.get('QUERY_STRING')
     params = parse_qsl(query_string, keep_blank_values=True)
@@ -69,28 +71,28 @@ def payment(request):
     sign_string = ''
     for param in params:
         if param[0] != 'ik_sign':
-            sign_string += param[1].decode('utf-8') + ':'
+            sign_string += param[1] + ':'
     sign_string += key
-    sign = base64.b64encode(hashlib.md5(sign_string.encode('utf-8')).digest())
+    sign = base64.b64encode(hashlib.md5(sign_string.encode('utf-8')).digest()).decode()
 
     if data.get('ik_sign') != sign:
-        return HttpResponse('Incorrect digital signature', status=ACCEPTED)
+        return HttpResponse('Incorrect digital signature')
 
     if data.get('ik_inv_st') != 'success':
-        return HttpResponse('Invalid payment status', status=ACCEPTED)
+        return HttpResponse('Invalid payment status')
 
-    if data.get('ik_co_id') != settings.PAYMENT['publicKey']:
-        return HttpResponse('Invalid checkout id', status=ACCEPTED)
+    if data.get('ik_co_id') != settings.PAYMENT['public_key']:
+        return HttpResponse('Invalid checkout id')
 
     try:
         item = models.Item.objects.get(id=item_id)
     except models.Item.DoesNotExist:
-        return HttpResponse('Invalid purchase subject', status=ACCEPTED)
+        return HttpResponse('Invalid purchase subject')
 
     price = item.item_price
 
     if order_sum != price:
-        return HttpResponse('Invalid payment amount', status=ACCEPTED)
+        return HttpResponse('Invalid payment amount')
 
     try:
         payment = models.Payment.objects.get(payment_number=payment_id)
@@ -106,7 +108,7 @@ def payment(request):
             )
             payment.save()
         except Error:
-            return HttpResponse('Unable to create payment database', status=ACCEPTED)
+            return HttpResponse('Unable to create payment database')
 
         try:
             cmd = item.item_cmd.format(account=account)
@@ -117,11 +119,11 @@ def payment(request):
             )
             task.save()
         except Error:
-            return HttpResponse('Unable to create task database', status=ACCEPTED)
+            return HttpResponse('Unable to create task database')
 
-        return HttpResponse()
+        return HttpResponse('YES')
     else:
-        return HttpResponse('Payment has already been paid', status=ACCEPTED)
+        return HttpResponse('Payment has already been paid')
 
 
 urlpatterns = [

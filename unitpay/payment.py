@@ -34,7 +34,10 @@ getParameters = {
 
 
 def payment(request):
-    ip = request.META.get('REMOTE_ADDR')
+    ip = request.META.get('HTTP_CF_CONNECTING_IP')
+    if ip is None:
+        ip = request.META.get('REMOTE_ADDR')
+
     if ip not in allowIps:
         raise Http404()
 

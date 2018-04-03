@@ -36,7 +36,10 @@ getParameters = {
 
 
 def payment(request):
-    ip = request.META.get('REMOTE_ADDR')
+    ip = request.META.get('HTTP_CF_CONNECTING_IP')
+    if ip is None:
+        ip = request.META.get('REMOTE_ADDR')
+
     if ip not in allowIps:
         raise Http404()
 
@@ -45,13 +48,13 @@ def payment(request):
             return HttpResponse('Invalid request')
 
     data = request.GET.copy()
-    key = settings.PAYMENT['secretKey2']
+    key = settings.PAYMENT['secret_key2']
     account = data.get('MERCHANT_ORDER_ID')
 
     try:
         item_id = int(data.get('us_item'))
         order_sum = int(data.get('AMOUNT'))
-        payment_id = int(data.get('intid'))
+        payment_id = int(data.get('int_id'))
     except ValueError:
         return HttpResponse('Invalid parameters')
 
@@ -61,7 +64,7 @@ def payment(request):
     if data.get('SIGN') != sign:
         return HttpResponse('Incorrect digital signature')
 
-    if data.get('MERCHANT_ID') != settings.PAYMENT['publicKey']:
+    if data.get('MERCHANT_ID') != settings.PAYMENT['public_key']:
         return HttpResponse('Invalid checkout id')
 
     try:
