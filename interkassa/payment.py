@@ -118,10 +118,11 @@ def payment(request):
                 task_payment=payment
             )
             task.save()
+
+            return HttpResponse('YES')
         except Error:
             return HttpResponse('Unable to create task database')
 
-        return HttpResponse('YES')
     else:
         return HttpResponse('Payment has already been paid')
 

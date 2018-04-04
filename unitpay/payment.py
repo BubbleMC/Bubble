@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
-import hashlib
 import re
+from hashlib import sha256
 from urllib.parse import parse_qsl
 
 from django.utils import timezone
@@ -47,7 +47,7 @@ def payment(request):
 
     data = request.GET.copy()
     method = data.get('method')
-    key = settings.PAYMENT['secretKey']
+    key = settings.PAYMENT['secret_key']
     currency = settings.PAYMENT['currency']
 
     try:
@@ -69,7 +69,8 @@ def payment(request):
         if (param[0] != 'params[sign]') and (param[0] != 'params[signature]'):
             sign_string += param[1] + '{up}'
     sign_string += key
-    sign = hashlib.sha256(sign_string.encode('utf-8')).hexdigest()
+
+    sign = sha256(sign_string.encode('utf-8')).hexdigest()
 
     if data.get('params[signature]') != sign:
         return JsonResponse({'error': {'message': 'Incorrect digital signature'}})
@@ -97,12 +98,12 @@ def payment(request):
                     payment_item=item
                 )
                 payment.save()
+
+                return JsonResponse({'result': {'message': 'CHECK is successful'}})
             except Error:
                 return JsonResponse({'error': {'message': 'Unable to create payment database'}})
         else:
             return JsonResponse({'result': {'message': 'Payment already exists'}})
-
-        return JsonResponse({'result': {'message': 'CHECK is successful'}})
 
     if method == 'pay':
         try:
@@ -129,12 +130,12 @@ def payment(request):
                 task_payment=payment
             )
             task.save()
+
+            return JsonResponse({'result': {'message': 'PAY is successful'}})
         except models.Item.DoesNotExist:
             return JsonResponse({'error': {'message': 'Invalid purchase subject'}})
         except Error:
             return JsonResponse({'error': {'message': 'Unable to create task database'}})
-
-        return JsonResponse({'result': {'message': 'PAY is successful'}})
 
     return JsonResponse({'error': {'message': 'Method not supported'}})
 

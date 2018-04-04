@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Bubble Copyright © 2018 Il'ya Semyonov
 # License: https://www.gnu.org/licenses/gpl-3.0.en.html
-import hashlib
+from hashlib import md5
 
 from django.utils import timezone
 from django.urls import re_path
@@ -54,12 +54,13 @@ def payment(request):
     try:
         item_id = int(data.get('us_item'))
         order_sum = int(data.get('AMOUNT'))
-        payment_id = int(data.get('int_id'))
+        payment_id = int(data.get('intid'))
     except ValueError:
         return HttpResponse('Invalid parameters')
 
-    sign_string = data.get('MERCHANT_ID') + ':' + data.get('AMOUNT') + ':' + key + ':' + account
-    sign = hashlib.md5(sign_string).hexdigest()
+    separator = ':'
+    sign_string = separator.join((data.get('MERCHANT_ID'), data.get('AMOUNT'), key, account))
+    sign = md5(sign_string).hexdigest()
 
     if data.get('SIGN') != sign:
         return HttpResponse('Incorrect digital signature')
@@ -100,10 +101,11 @@ def payment(request):
                 task_payment=payment
             )
             task.save()
+
+            return HttpResponse('YES')
         except Error:
             return HttpResponse('Unable to create task database')
 
-        return HttpResponse('YES')
     else:
         return HttpResponse('Payment has already been paid')
 
