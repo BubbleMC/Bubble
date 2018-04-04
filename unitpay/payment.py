@@ -15,7 +15,7 @@ from django.conf import settings
 from basic import models
 
 
-allowIps = {
+allow_ips = {
     '31.186.100.49',
     '178.132.203.105',
     '52.29.152.23',
@@ -23,7 +23,7 @@ allowIps = {
 }
 
 
-getParameters = {
+required_params = {
     'method',
     'params[account]',
     'params[signature]',
@@ -38,12 +38,11 @@ def payment(request):
     if ip is None:
         ip = request.META.get('REMOTE_ADDR')
 
-    if ip not in allowIps:
+    if ip not in allow_ips:
         raise Http404()
 
-    for getParameter in getParameters:
-        if getParameter not in request.GET:
-            return JsonResponse({'error': {'message': 'Invalid request'}})
+    if any(required_param not in request.GET for required_param in required_params):
+        return JsonResponse({'error': {'message': 'Invalid request'}})
 
     data = request.GET.copy()
     method = data.get('method')
@@ -64,10 +63,7 @@ def payment(request):
     params = parse_qsl(query_string, keep_blank_values=True)
     params.sort()
 
-    sign_string = ''
-    for param in params:
-        if (param[0] != 'params[sign]') and (param[0] != 'params[signature]'):
-            sign_string += param[1] + '{up}'
+    sign_string = ''.join(v + '{up}' if 'sign' not in k else '' for k, v in params)
     sign_string += key
 
     sign = sha256(sign_string.encode('utf-8')).hexdigest()

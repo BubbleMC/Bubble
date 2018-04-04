@@ -14,7 +14,7 @@ from django.conf import settings
 from basic import models
 
 
-allowIps = {
+allow_ips = {
     '136.243.38.147',
     '136.243.38.149',
     '136.243.38.150',
@@ -24,7 +24,7 @@ allowIps = {
 }
 
 
-getParameters = {
+required_params = {
     'MERCHANT_ID',
     'AMOUNT',
     'intid',
@@ -40,12 +40,11 @@ def payment(request):
     if ip is None:
         ip = request.META.get('REMOTE_ADDR')
 
-    if ip not in allowIps:
+    if ip not in allow_ips:
         raise Http404()
 
-    for getParameter in getParameters:
-        if getParameter not in request.GET:
-            return HttpResponse('Invalid request')
+    if any(required_param not in request.GET for required_param in required_params):
+        return HttpResponse('Invalid request')
 
     data = request.GET.copy()
     key = settings.PAYMENT['secret_key2']
@@ -58,9 +57,8 @@ def payment(request):
     except ValueError:
         return HttpResponse('Invalid parameters')
 
-    separator = ':'
-    sign_string = separator.join((data.get('MERCHANT_ID'), data.get('AMOUNT'), key, account))
-    sign = md5(sign_string).hexdigest()
+    sign_string = ':'.join((data.get('MERCHANT_ID'), data.get('AMOUNT'), key, account))
+    sign = md5(sign_string.encode('utf-8')).hexdigest()
 
     if data.get('SIGN') != sign:
         return HttpResponse('Incorrect digital signature')

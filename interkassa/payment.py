@@ -15,7 +15,7 @@ from django.conf import settings
 from basic import models
 
 
-allowIps = {
+allow_ips = {
     '151.80.190.97',
     '151.80.190.98',
     '151.80.190.99',
@@ -27,7 +27,7 @@ allowIps = {
 }
 
 
-getParameters = {
+required_params = {
     'ik_co_id',
     'ik_am',
     'ik_cur',
@@ -46,12 +46,11 @@ def payment(request):
     if ip is None:
         ip = request.META.get('REMOTE_ADDR')
 
-    if ip not in allowIps:
+    if ip not in allow_ips:
         raise Http404()
 
-    for getParameter in getParameters:
-        if getParameter not in request.GET:
-            return HttpResponse('Invalid request')
+    if any(required_param not in request.GET for required_param in required_params):
+        return HttpResponse('Invalid request')
 
     data = request.GET.copy()
     account = data.get('ik_x_account')
@@ -68,11 +67,9 @@ def payment(request):
     params = parse_qsl(query_string, keep_blank_values=True)
     params.sort()
 
-    sign_string = ''
-    for param in params:
-        if param[0] != 'ik_sign':
-            sign_string += param[1] + ':'
+    sign_string = ''.join(v + ':' if 'ik_sign' not in k else '' for k, v in params)
     sign_string += key
+
     sign = base64.b64encode(hashlib.md5(sign_string.encode('utf-8')).digest()).decode()
 
     if data.get('ik_sign') != sign:
