@@ -54,7 +54,7 @@ def initialization(request):
             sign_string = separator.join(['{}'.format(value) for (key, value) in params.items()])
             sign_string += separator + secret_key
 
-            sign = sha256(sign_string).hexdigest()
+            sign = sha256(sign_string.encode('utf-8')).hexdigest()
             params.update({'signature': sign})
 
             params_string = urlencode(params)
